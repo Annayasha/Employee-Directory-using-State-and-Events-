@@ -1,16 +1,13 @@
+
 function Footer() {
   return (
     <footer className="footer">
-
       <div>
         <strong>🌾 GreenField Farm</strong>
-        <span>Employee Management System</span>
+        <span>Workforce Management Platform</span>
       </div>
 
-      <p>
-        Built with React • Assignment 3
-      </p>
-
+      <p>Crafted with React · Employee Directory</p>
     </footer>
   );
 }

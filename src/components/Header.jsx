@@ -1,18 +1,18 @@
+
 function Header() {
   return (
     <header className="top-header">
-      <div className="brand">
-        <div className="brand-icon">🌾</div>
-
+      <a className="brand" href="#top" aria-label="GreenField Farm home">
+        <div className="brand-icon" aria-hidden="true">🌾</div>
         <div>
           <h1>GreenField Farm</h1>
-          <p>Employee Management System</p>
+          <p>Workforce Management Platform</p>
         </div>
-      </div>
+      </a>
 
       <div className="header-badge">
-        <span className="status-dot"></span>
-        Farm Operations
+        <span className="status-dot" />
+        Operations Portal
       </div>
     </header>
   );

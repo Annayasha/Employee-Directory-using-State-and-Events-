@@ -1,199 +1,317 @@
+
 import { useEffect, useState } from "react";
 
-function EmployeeForm({ onAddEmployee, onUpdateEmployee, editingEmployee, onCancelEdit }) {
-  const initialForm = {
-    name: "",
-    employeeId: "",
-    department: "Production",
-    gender: "Male",
-    phone: "",
-    localAddress: "",
-    permanentAddress: "",
-  };
+const emptyForm = {
+  name: "",
+  employeeId: "",
+  department: "",
+  gender: "",
+  phone: "",
+  localAddress: "",
+  permanentAddress: "",
+};
 
-  const [formData, setFormData] = useState(initialForm);
+function EmployeeForm({
+  employees = [],
+  onAddEmployee,
+  onUpdateEmployee,
+  editingEmployee,
+  onCancelEdit,
+}) {
+  const [formData, setFormData] = useState(emptyForm);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     if (editingEmployee) {
-      setFormData(editingEmployee);
+      setFormData({
+        name: editingEmployee.name || "",
+        employeeId: editingEmployee.employeeId || "",
+        department: editingEmployee.department || "",
+        gender: editingEmployee.gender || "",
+        phone: editingEmployee.phone || "",
+        localAddress: editingEmployee.localAddress || "",
+        permanentAddress: editingEmployee.permanentAddress || "",
+      });
     } else {
-      setFormData(initialForm);
+      setFormData(emptyForm);
     }
+
+    setError("");
+    setSuccessMessage("");
   }, [editingEmployee]);
 
-  const handleChange = (event) => {
+  function handleChange(event) {
     const { name, value } = event.target;
 
-    setFormData((previousData) => ({
-      ...previousData,
+    setFormData((previous) => ({
+      ...previous,
       [name]: value,
     }));
-  };
 
-  const handleSubmit = (event) => {
+    setError("");
+    setSuccessMessage("");
+  }
+
+  function handleSubmit(event) {
     event.preventDefault();
+    setError("");
+    setSuccessMessage("");
 
-    if (
-      !formData.name ||
-      !formData.employeeId ||
-      !formData.phone ||
-      !formData.localAddress ||
-      !formData.permanentAddress
-    ) {
-      alert("Please fill in all required fields.");
+    const cleanedData = {
+      ...formData,
+      name: formData.name.trim(),
+      employeeId: formData.employeeId.trim(),
+      phone: formData.phone.trim(),
+      localAddress: formData.localAddress.trim(),
+      permanentAddress: formData.permanentAddress.trim(),
+    };
+
+    if (Object.values(cleanedData).some((value) => !value.trim())) {
+      setError("Please complete every required field.");
       return;
     }
 
-    if (editingEmployee) {
-      onUpdateEmployee(formData);
-    } else {
-      onAddEmployee({
-        ...formData,
-        id: Date.now(),
-      });
+    const normalizedId = cleanedData.employeeId.toLowerCase();
+
+    const duplicateId = employees.some(
+      (employee) =>
+        employee.employeeId.trim().toLowerCase() === normalizedId &&
+        employee.id !== editingEmployee?.id
+    );
+
+    if (duplicateId) {
+      setError(
+        `Employee ID "${cleanedData.employeeId}" is already in use. Please enter a unique ID.`
+      );
+      return;
     }
 
-    setFormData(initialForm);
-  };
+    if (!/^\d{10}$/.test(cleanedData.phone)) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
 
-  const handleCancel = () => {
-    setFormData(initialForm);
-    onCancelEdit();
-  };
+    const result = editingEmployee
+      ? onUpdateEmployee({
+          ...editingEmployee,
+          ...cleanedData,
+        })
+      : onAddEmployee({
+          ...cleanedData,
+          id: Date.now(),
+        });
+
+    if (result?.success === false) {
+      setError(result.message || "Unable to save this employee.");
+      return;
+    }
+
+    setFormData(emptyForm);
+    setError("");
+    setSuccessMessage(
+      editingEmployee
+        ? "Employee details updated successfully!"
+        : "New employee added successfully!"
+    );
+
+    if (!editingEmployee) {
+      window.setTimeout(() => setSuccessMessage(""), 3000);
+    }
+  }
+
+  function handleCancel() {
+    setFormData(emptyForm);
+    setError("");
+    setSuccessMessage("");
+    onCancelEdit?.();
+  }
 
   return (
     <section className="form-section">
-      <div className="section-heading">
+      <div className="form-heading">
+        <div className="form-heading-icon">
+          {editingEmployee ? "✎" : "＋"}
+        </div>
+
         <div>
-          <span className="section-label">EMPLOYEE FORM</span>
-
-          <h2>
-            {editingEmployee ? "Edit Employee" : "Add New Employee"}
-          </h2>
-
-          <p>
+          <p className="eyebrow">
+            {editingEmployee ? "UPDATE YOUR RECORDS" : "EXPAND YOUR TEAM"}
+          </p>
+          <h2>{editingEmployee ? "Edit Employee" : "Add a Team Member"}</h2>
+          <p className="section-description">
             {editingEmployee
-              ? "Update the employee information below."
-              : "Enter employee details to add them to the directory."}
+              ? "Make changes to the employee details below."
+              : "Every great team starts with a person. Add their details below."}
           </p>
         </div>
+
+        <span className="required-note">* Required fields</span>
       </div>
 
-      <form onSubmit={handleSubmit} className="employee-form">
+      <form className="employee-form" onSubmit={handleSubmit}>
+        <div className="form-subheading">
+          <span className="subheading-number">01</span>
+          <h3>Personal & Work Details</h3>
+        </div>
 
         <div className="form-grid">
-
-          <div className="input-group">
-            <label>Employee Name *</label>
-
+          <div className="form-group">
+            <label htmlFor="name">Full Name *</label>
             <input
-              type="text"
+              id="name"
               name="name"
-              placeholder="Enter employee name"
+              type="text"
+              placeholder="e.g. Rahul Sharma"
               value={formData.name}
               onChange={handleChange}
+              autoComplete="name"
+              required
             />
           </div>
 
-          <div className="input-group">
-            <label>Employee ID *</label>
-
+          <div className="form-group">
+            <label htmlFor="employeeId">Unique Employee ID *</label>
             <input
-              type="text"
+              id="employeeId"
               name="employeeId"
-              placeholder="Example: EMP001"
+              type="text"
+              placeholder="e.g. EMP107"
               value={formData.employeeId}
               onChange={handleChange}
+              required
             />
+            <small className="input-hint">
+              Each employee must have a different ID.
+            </small>
           </div>
 
-          <div className="input-group">
-            <label>Department *</label>
-
+          <div className="form-group">
+            <label htmlFor="department">Department *</label>
             <select
+              id="department"
               name="department"
               value={formData.department}
               onChange={handleChange}
+              required
             >
-              <option value="Production">Production</option>
-              <option value="Agriculture">Agriculture</option>
+              <option value="">Choose a department</option>
               <option value="Administration">Administration</option>
+              <option value="Agriculture">Agriculture</option>
+              <option value="Finance">Finance</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Irrigation">Irrigation</option>
+              <option value="Livestock">Livestock</option>
+              <option value="Logistics">Logistics</option>
               <option value="Maintenance">Maintenance</option>
+              <option value="Operations">Operations</option>
+              <option value="Production">Production</option>
+              <option value="Sales">Sales</option>
               <option value="Security">Security</option>
-              <option value="Transport">Transport</option>
+              <option value="Warehouse">Warehouse</option>
             </select>
           </div>
 
-          <div className="input-group">
-            <label>Gender *</label>
-
+          <div className="form-group">
+            <label htmlFor="gender">Gender *</label>
             <select
+              id="gender"
               name="gender"
               value={formData.gender}
               onChange={handleChange}
+              required
             >
+              <option value="">Choose an option</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Other">Other</option>
+              <option value="Prefer not to say">Prefer not to say</option>
             </select>
           </div>
 
-          <div className="input-group">
-            <label>Phone Number *</label>
-
+          <div className="form-group">
+            <label htmlFor="phone">Phone Number *</label>
             <input
-              type="tel"
+              id="phone"
               name="phone"
-              placeholder="Enter phone number"
+              type="tel"
+              inputMode="numeric"
+              placeholder="10-digit mobile number"
               value={formData.phone}
               onChange={handleChange}
+              maxLength={10}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="form-subheading address-subheading">
+          <span className="subheading-number">02</span>
+          <h3>Address Information</h3>
+        </div>
+
+        <div className="form-grid">
+          <div className="form-group">
+            <label htmlFor="localAddress">Local Address *</label>
+            <input
+              id="localAddress"
+              name="localAddress"
+              type="text"
+              placeholder="Current residential address"
+              value={formData.localAddress}
+              onChange={handleChange}
+              required
             />
           </div>
 
-          <div className="input-group full-width">
-            <label>Local Address *</label>
-
+          <div className="form-group">
+            <label htmlFor="permanentAddress">Permanent Address *</label>
             <textarea
-              name="localAddress"
-              placeholder="Enter local address"
-              value={formData.localAddress}
-              onChange={handleChange}
-              rows="3"
-            ></textarea>
-          </div>
-
-          <div className="input-group full-width">
-            <label>Permanent Address *</label>
-
-            <textarea
+              id="permanentAddress"
               name="permanentAddress"
-              placeholder="Enter permanent address"
+              placeholder="Permanent residential address"
               value={formData.permanentAddress}
               onChange={handleChange}
-              rows="3"
-            ></textarea>
+              rows={2}
+              required
+            />
           </div>
-
         </div>
 
+        {error && (
+          <div className="form-message error-message" role="alert">
+            <span>!</span>
+            {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="form-message success-message" role="status">
+            <span>✓</span>
+            {successMessage}
+          </div>
+        )}
+
         <div className="form-actions">
+          <button type="submit" className="btn btn-forest submit-button">
+            <span>{editingEmployee ? "✓" : "＋"}</span>
+            {editingEmployee ? "Save Changes" : "Add Employee"}
+          </button>
 
           {editingEmployee && (
             <button
               type="button"
-              className="cancel-btn"
+              className="btn btn-outline"
               onClick={handleCancel}
             >
-              Cancel
+              Cancel Editing
             </button>
           )}
 
-          <button type="submit" className="primary-btn">
-            {editingEmployee ? "✓ Update Employee" : "+ Add Employee"}
-          </button>
-
+          <span className="form-footnote">
+            <span>✳</span> Employee records are easy to update later.
+          </span>
         </div>
-
       </form>
     </section>
   );

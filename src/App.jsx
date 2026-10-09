@@ -1,415 +1,351 @@
-import { useState } from "react";
 
+import { useState } from "react";
 import Header from "./components/Header";
 import EmployeeForm from "./components/EmployeeForm";
 import EmployeeList from "./components/EmployeeList";
 import Footer from "./components/Footer";
 
+const initialEmployees = [
+  {
+    id: 1,
+    name: "Rahul Sharma",
+    employeeId: "EMP101",
+    department: "Agriculture",
+    gender: "Male",
+    phone: "9876543210",
+    localAddress: "Salt Lake, Kolkata",
+    permanentAddress: "Howrah, West Bengal",
+  },
+  {
+    id: 2,
+    name: "Priya Das",
+    employeeId: "EMP102",
+    department: "Human Resources",
+    gender: "Female",
+    phone: "9876543211",
+    localAddress: "New Town, Kolkata",
+    permanentAddress: "Siliguri, West Bengal",
+  },
+  {
+    id: 3,
+    name: "Amit Roy",
+    employeeId: "EMP103",
+    department: "Finance",
+    gender: "Male",
+    phone: "9876543212",
+    localAddress: "Dum Dum, Kolkata",
+    permanentAddress: "Bardhaman, West Bengal",
+  },
+  {
+    id: 4,
+    name: "Sneha Ghosh",
+    employeeId: "EMP104",
+    department: "Operations",
+    gender: "Female",
+    phone: "9876543213",
+    localAddress: "Behala, Kolkata",
+    permanentAddress: "Midnapore, West Bengal",
+  },
+  {
+    id: 5,
+    name: "Arjun Sen",
+    employeeId: "EMP105",
+    department: "Livestock",
+    gender: "Male",
+    phone: "9876543214",
+    localAddress: "Rajarhat, Kolkata",
+    permanentAddress: "Nadia, West Bengal",
+  },
+  {
+    id: 6,
+    name: "Riya Mukherjee",
+    employeeId: "EMP106",
+    department: "Production",
+    gender: "Female",
+    phone: "9876543215",
+    localAddress: "Jadavpur, Kolkata",
+    permanentAddress: "Hooghly, West Bengal",
+  },
+];
+
 function App() {
-
-  // -----------------------------------
-  // Initial Employee Data
-  // -----------------------------------
-
-  const initialEmployees = [
-    {
-      id: 1,
-      name: "Rahul Sharma",
-      employeeId: "EMP001",
-      department: "Production",
-      gender: "Male",
-      phone: "9876543210",
-      localAddress: "Village Road, Kolkata, West Bengal",
-      permanentAddress: "Burdwan, West Bengal",
-    },
-
-    {
-      id: 2,
-      name: "Priya Das",
-      employeeId: "EMP002",
-      department: "Administration",
-      gender: "Female",
-      phone: "9123456780",
-      localAddress: "Salt Lake, Kolkata, West Bengal",
-      permanentAddress: "Howrah, West Bengal",
-    },
-
-    {
-      id: 3,
-      name: "Amit Roy",
-      employeeId: "EMP003",
-      department: "Agriculture",
-      gender: "Male",
-      phone: "9834567890",
-      localAddress: "Barasat, West Bengal",
-      permanentAddress: "Nadia, West Bengal",
-    },
-
-    {
-      id: 4,
-      name: "Sneha Paul",
-      employeeId: "EMP004",
-      department: "Maintenance",
-      gender: "Female",
-      phone: "9012345678",
-      localAddress: "New Town, Kolkata, West Bengal",
-      permanentAddress: "Hooghly, West Bengal",
-    },
-
-    {
-      id: 5,
-      name: "Arjun Ghosh",
-      employeeId: "EMP005",
-      department: "Security",
-      gender: "Male",
-      phone: "8967452310",
-      localAddress: "Dum Dum, Kolkata, West Bengal",
-      permanentAddress: "Murshidabad, West Bengal",
-    },
-
-    {
-      id: 6,
-      name: "Riya Sen",
-      employeeId: "EMP006",
-      department: "Transport",
-      gender: "Female",
-      phone: "9087654321",
-      localAddress: "Behala, Kolkata, West Bengal",
-      permanentAddress: "South 24 Parganas, West Bengal",
-    },
-  ];
-
-
-  // -----------------------------------
-  // State
-  // -----------------------------------
-
   const [employees, setEmployees] = useState(initialEmployees);
-
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const [departmentFilter, setDepartmentFilter] = useState("All");
-
   const [editingEmployee, setEditingEmployee] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("All");
 
+  function handleAddEmployee(newEmployee) {
+    const normalizedId = newEmployee.employeeId.trim().toLowerCase();
 
-  // -----------------------------------
-  // Add Employee
-  // -----------------------------------
-
-  const handleAddEmployee = (newEmployee) => {
-
-    setEmployees((previousEmployees) => [
-      ...previousEmployees,
-      newEmployee,
-    ]);
-
-  };
-
-
-  // -----------------------------------
-  // Delete Employee
-  // -----------------------------------
-
-  const handleDeleteEmployee = (employeeId) => {
-
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this employee?"
+    const duplicate = employees.some(
+      (employee) =>
+        employee.employeeId.trim().toLowerCase() === normalizedId
     );
 
-    if (!confirmDelete) {
-      return;
+    if (duplicate) {
+      return {
+        success: false,
+        message: "This Employee ID already exists. Please use a unique ID.",
+      };
     }
 
-    setEmployees((previousEmployees) =>
-      previousEmployees.filter(
-        (employee) => employee.id !== employeeId
+    setEmployees((previous) => [
+      ...previous,
+      { ...newEmployee, employeeId: newEmployee.employeeId.trim() },
+    ]);
+
+    return { success: true };
+  }
+
+  function handleUpdateEmployee(updatedEmployee) {
+    const normalizedId = updatedEmployee.employeeId.trim().toLowerCase();
+
+    const duplicate = employees.some(
+      (employee) =>
+        employee.employeeId.trim().toLowerCase() === normalizedId &&
+        employee.id !== updatedEmployee.id
+    );
+
+    if (duplicate) {
+      return {
+        success: false,
+        message: "This Employee ID belongs to another employee.",
+      };
+    }
+
+    setEmployees((previous) =>
+      previous.map((employee) =>
+        employee.id === updatedEmployee.id
+          ? {
+              ...updatedEmployee,
+              employeeId: updatedEmployee.employeeId.trim(),
+            }
+          : employee
       )
     );
 
-  };
+    setEditingEmployee(null);
+    return { success: true };
+  }
 
+  function handleDeleteEmployee(id) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this employee?"
+    );
 
-  // -----------------------------------
-  // Start Editing
-  // -----------------------------------
+    if (!confirmed) return;
 
-  const handleEditEmployee = (employee) => {
+    setEmployees((previous) =>
+      previous.filter((employee) => employee.id !== id)
+    );
 
+    if (editingEmployee?.id === id) {
+      setEditingEmployee(null);
+    }
+  }
+
+  function handleEditEmployee(employee) {
     setEditingEmployee(employee);
 
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
+  }
 
-  };
-
-
-  // -----------------------------------
-  // Update Employee
-  // -----------------------------------
-
-  const handleUpdateEmployee = (updatedEmployee) => {
-
-    setEmployees((previousEmployees) =>
-      previousEmployees.map((employee) =>
-        employee.id === updatedEmployee.id
-          ? updatedEmployee
-          : employee
-      )
-    );
-
+  function handleCancelEdit() {
     setEditingEmployee(null);
+  }
 
-  };
-
-
-  // -----------------------------------
-  // Search + Department Filter
-  // -----------------------------------
+  const departments = [
+    ...new Set(employees.map((employee) => employee.department)),
+  ].sort();
 
   const filteredEmployees = employees.filter((employee) => {
+    const query = searchTerm.trim().toLowerCase();
 
     const matchesSearch =
-      employee.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-
-      employee.employeeId
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-
-      employee.phone.includes(searchTerm);
-
+      employee.name.toLowerCase().includes(query) ||
+      employee.employeeId.toLowerCase().includes(query) ||
+      employee.phone.includes(query) ||
+      employee.department.toLowerCase().includes(query);
 
     const matchesDepartment =
-      departmentFilter === "All" ||
-      employee.department === departmentFilter;
-
+      selectedDepartment === "All" ||
+      employee.department === selectedDepartment;
 
     return matchesSearch && matchesDepartment;
-
   });
-
-
-  // -----------------------------------
-  // Department Count
-  // -----------------------------------
-
-  const departmentCount = new Set(
-    employees.map((employee) => employee.department)
-  ).size;
-
 
   return (
     <div className="app">
-
-      {/* Header */}
       <Header />
 
-
       <main className="main-container">
-
-        {/* -----------------------------------
-            Hero Section
-        ----------------------------------- */}
-
         <section className="hero-section">
-
           <div className="hero-content">
-
             <span className="hero-tag">
-              FARM OPERATIONS
+              <span className="status-dot" />
+              PEOPLE · PURPOSE · PROGRESS
             </span>
 
-            <h2>
-              Employee Directory
-            </h2>
+            <h1>
+              Growing together.
+              <br />
+              <span>Rooted in people.</span>
+            </h1>
 
-            <p>
-              Manage your farm workforce efficiently
-              with a simple and powerful employee
-              management system.
+            <p className="hero-description">
+              A smarter way to organize your workforce. Manage employee
+              information, explore your team, and keep every detail
+              growing in the right direction.
             </p>
 
+            <a href="#employee-form" className="btn btn-copper hero-button">
+              <span>＋</span> Add New Employee
+            </a>
+
+            <div className="hero-note">
+              <span>✳</span> A healthier workplace starts with better
+              organization.
+            </div>
           </div>
 
-          <div className="hero-icon">
-            🌱
+          <div className="hero-visual" aria-hidden="true">
+            <div className="visual-orbit orbit-one" />
+            <div className="visual-orbit orbit-two" />
+            <div className="visual-center">
+              <span className="visual-plant">🌿</span>
+              <span className="visual-caption">GROW AS ONE</span>
+            </div>
+            <div className="floating-leaf leaf-top">✳</div>
+            <div className="floating-leaf leaf-bottom">❋</div>
           </div>
-
         </section>
-
-
-        {/* -----------------------------------
-            Statistics
-        ----------------------------------- */}
 
         <section className="stats-grid">
-
-          <div className="stat-card">
-
-            <div className="stat-icon green">
-              👥
+          <article className="stat-card">
+            <div className="stat-icon icon-forest">♧</div>
+            <div className="stat-details">
+              <p>Total Employees</p>
+              <h2>{employees.length.toString().padStart(2, "0")}</h2>
+              <span>People on your team</span>
             </div>
+            <div className="stat-decoration">01</div>
+          </article>
 
-            <div>
-              <span>Total Employees</span>
-              <strong>{employees.length}</strong>
+          <article className="stat-card">
+            <div className="stat-icon icon-sage">✿</div>
+            <div className="stat-details">
+              <p>Departments</p>
+              <h2>{departments.length.toString().padStart(2, "0")}</h2>
+              <span>Teams working together</span>
             </div>
+            <div className="stat-decoration">02</div>
+          </article>
 
-          </div>
-
-
-          <div className="stat-card">
-
-            <div className="stat-icon blue">
-              🏢
+          <article className="stat-card">
+            <div className="stat-icon icon-copper">⌕</div>
+            <div className="stat-details">
+              <p>Matching Results</p>
+              <h2>{filteredEmployees.length.toString().padStart(2, "0")}</h2>
+              <span>Based on your filters</span>
             </div>
-
-            <div>
-              <span>Departments</span>
-              <strong>{departmentCount}</strong>
-            </div>
-
-          </div>
-
-
-          <div className="stat-card">
-
-            <div className="stat-icon orange">
-              🔎
-            </div>
-
-            <div>
-              <span>Showing</span>
-              <strong>{filteredEmployees.length}</strong>
-            </div>
-
-          </div>
-
+            <div className="stat-decoration">03</div>
+          </article>
         </section>
 
-
-        {/* -----------------------------------
-            Employee Form
-        ----------------------------------- */}
-
-        <EmployeeForm
-          onAddEmployee={handleAddEmployee}
-          onUpdateEmployee={handleUpdateEmployee}
-          editingEmployee={editingEmployee}
-          onCancelEdit={() => setEditingEmployee(null)}
-        />
-
-
-        {/* -----------------------------------
-            Directory Section
-        ----------------------------------- */}
+        <div id="employee-form" className="form-anchor">
+          <EmployeeForm
+            employees={employees}
+            onAddEmployee={handleAddEmployee}
+            onUpdateEmployee={handleUpdateEmployee}
+            editingEmployee={editingEmployee}
+            onCancelEdit={handleCancelEdit}
+          />
+        </div>
 
         <section className="directory-section">
-
-          <div className="directory-header">
-
+          <div className="directory-heading">
             <div>
-              <span className="section-label">
-                EMPLOYEE DIRECTORY
-              </span>
-
-              <h2>All Employees</h2>
-
-              <p>
-                Search, filter and manage your farm employees.
+              <p className="eyebrow">THE PEOPLE BEHIND THE PROGRESS</p>
+              <h2>Meet the Workforce<span>.</span></h2>
+              <p className="section-description">
+                Your employee records, thoughtfully organized in one place.
               </p>
             </div>
 
+            <div className="directory-total">
+              <span className="total-number">
+                {filteredEmployees.length.toString().padStart(2, "0")}
+              </span>
+              <span className="total-label">TEAM MEMBERS</span>
+            </div>
           </div>
 
-
-          {/* Search + Filter */}
-
-          <div className="toolbar">
-
-            <div className="search-box">
-
-              <span>🔍</span>
-
+          <div className="directory-controls">
+            <label className="search-box">
+              <span className="search-icon">⌕</span>
               <input
-                type="text"
-                placeholder="Search by name, ID or phone..."
+                type="search"
+                placeholder="Search by name, ID, phone or department..."
                 value={searchTerm}
-                onChange={(event) =>
-                  setSearchTerm(event.target.value)
-                }
+                onChange={(event) => setSearchTerm(event.target.value)}
+                aria-label="Search employees"
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  className="clear-search"
+                  onClick={() => setSearchTerm("")}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </label>
 
-            </div>
-
-
-            <div className="filter-box">
-
-              <label>Department</label>
-
+            <label className="filter-wrap">
+              <span>Department</span>
               <select
-                value={departmentFilter}
+                value={selectedDepartment}
                 onChange={(event) =>
-                  setDepartmentFilter(event.target.value)
+                  setSelectedDepartment(event.target.value)
                 }
+                aria-label="Filter by department"
               >
-
-                <option value="All">
-                  All Departments
-                </option>
-
-                <option value="Production">
-                  Production
-                </option>
-
-                <option value="Agriculture">
-                  Agriculture
-                </option>
-
-                <option value="Administration">
-                  Administration
-                </option>
-
-                <option value="Maintenance">
-                  Maintenance
-                </option>
-
-                <option value="Security">
-                  Security
-                </option>
-
-                <option value="Transport">
-                  Transport
-                </option>
-
+                <option value="All">All Departments</option>
+                {departments.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
               </select>
+            </label>
 
-            </div>
-
+            {(searchTerm || selectedDepartment !== "All") && (
+              <button
+                type="button"
+                className="btn btn-outline reset-button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedDepartment("All");
+                }}
+              >
+                Reset Filters
+              </button>
+            )}
           </div>
-
-
-          {/* Employee List */}
 
           <EmployeeList
             employees={filteredEmployees}
             onEdit={handleEditEmployee}
             onDelete={handleDeleteEmployee}
           />
-
         </section>
-
       </main>
 
-
-      {/* Footer */}
-
       <Footer />
-
     </div>
   );
 }
